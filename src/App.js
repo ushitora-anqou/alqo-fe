@@ -7,8 +7,10 @@ import {
   useParams
 } from "react-router-dom";
 
+const DOMAIN = "localhost:8080";
+
 async function create_room(num_players) {
-  const response = await fetch("http://localhost:8080/api/v1/room", {
+  const response = await fetch(`http://${DOMAIN}/api/v1/room`, {
     method: "POST",
     mode: "cors",
     headers: {
@@ -21,7 +23,7 @@ async function create_room(num_players) {
 }
 
 async function get_room_info(roomid) {
-  const response = await fetch(`http://localhost:8080/api/v1/room/${roomid}`, {
+  const response = await fetch(`http://${DOMAIN}/api/v1/room/${roomid}`, {
     credentials: "include"
   });
   const res = await response.json();
@@ -30,7 +32,7 @@ async function get_room_info(roomid) {
 
 async function register_as_player(roomid) {
   try {
-    await fetch(`http://localhost:8080/api/v1/room/${roomid}/register`, {
+    await fetch(`http://${DOMAIN}/api/v1/room/${roomid}/register`, {
       method: "POST",
       mode: "cors",
       credentials: "include",
@@ -46,7 +48,7 @@ async function register_as_player(roomid) {
 
 async function attack(roomid, target_player, target_hand_index, guess) {
   try {
-    await fetch(`http://localhost:8080/api/v1/room/${roomid}/attack`, {
+    await fetch(`http://${DOMAIN}/api/v1/room/${roomid}/attack`, {
       method: "POST",
       mode: "cors",
       credentials: "include",
@@ -63,7 +65,7 @@ async function attack(roomid, target_player, target_hand_index, guess) {
 
 async function stay(roomid) {
   try {
-    await fetch(`http://localhost:8080/api/v1/room/${roomid}/stay`, {
+    await fetch(`http://${DOMAIN}/api/v1/room/${roomid}/stay`, {
       method: "POST",
       mode: "cors",
       credentials: "include",
@@ -114,6 +116,7 @@ function Room() {
   const { roomid } = useParams();
   const [room, setRoom] = React.useState({});
   const [canRegister, setCanRegister] = React.useState(false);
+  const [socket, setSocket] = React.useState(null);
   const attackTargetPlayer = React.useRef();
   const attackTargetHandIndex = React.useRef();
   const attackGuess = React.useRef();
@@ -163,6 +166,31 @@ function Room() {
 
   React.useEffect(() => {
     async function impl() {
+      const socket = new WebSocket(`ws://${DOMAIN}/api/v1/room/${roomid}/ws`);
+      socket.onclose = async e => {
+        console.log(`ws closed ${e.code}`);
+      };
+      socket.onmessage = async e => {
+        const [event, data] = JSON.parse(e.data);
+        switch (event) {
+          case "player_registered":
+          case "game_started":
+          case "your_hand":
+          case "your_turn":
+          case "attacked":
+          case "stayed":
+          case "attacker_card_chosen":
+          case "game_finished":
+            // FIXME
+            await updateRoomState();
+            break;
+        }
+      };
+      setSocket(old => {
+        if (old !== null) old.close();
+        return socket;
+      });
+
       const room = await updateRoomState();
       if (
         !(
