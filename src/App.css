@@ -1,38 +1,52 @@
-.App {
-  text-align: center;
+/* Thanks to: https://stackoverflow.com/a/29354766 */
+span.game-black-card:empty:before {
+  content: "\200b";
 }
-
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+span.game-white-card:empty:before {
+  content: "\200b";
 }
-
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
-
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
+span.game-black-card {
   color: white;
+  background-color: black;
+  display: inline-block;
+  width: 2em;
+  line-height: 4em;
+  margin: 1em;
+  text-align: center;
+  font-weight: bold;
 }
-
-.App-link {
-  color: #61dafb;
+span.game-white-card {
+  color: black;
+  background-color: lightgray;
+  display: inline-block;
+  width: 2em;
+  line-height: 4em;
+  margin: 1em;
+  text-align: center;
+  font-weight: bold;
 }
-
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+span.game-player-index:empty:before {
+  content: "\200b";
+}
+span.game-player-index {
+  display: inline-block;
+  width: 4em;
+  line-height: 4em;
+  text-align: right;
+}
+span.game-player-index-current-turn {
+  display: inline-block;
+  line-height: 4em;
+  margin: 1em;
+  text-align: right;
+}
+span.game-player-index-you:empty:before {
+  content: "\200b";
+}
+span.game-player-index-you {
+  display: inline-block;
+  width: 3em;
+  line-height: 4em;
+  margin: 1em;
+  text-align: right;
 }
