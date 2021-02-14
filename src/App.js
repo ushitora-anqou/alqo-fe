@@ -8,10 +8,8 @@ import {
 } from "react-router-dom";
 import "./App.css";
 
-const DOMAIN = "localhost:8080";
-
 async function create_room(num_players) {
-  const response = await fetch(`http://${DOMAIN}/api/v1/room`, {
+  const response = await fetch(`/api/v1/room`, {
     method: "POST",
     mode: "cors",
     headers: {
@@ -24,7 +22,7 @@ async function create_room(num_players) {
 }
 
 async function get_room_info(roomid) {
-  const response = await fetch(`http://${DOMAIN}/api/v1/room/${roomid}`, {
+  const response = await fetch(`/api/v1/room/${roomid}`, {
     credentials: "include"
   });
   const res = await response.json();
@@ -33,7 +31,7 @@ async function get_room_info(roomid) {
 
 async function register_as_player(roomid) {
   try {
-    await fetch(`http://${DOMAIN}/api/v1/room/${roomid}/register`, {
+    await fetch(`/api/v1/room/${roomid}/register`, {
       method: "POST",
       mode: "cors",
       credentials: "include",
@@ -49,7 +47,7 @@ async function register_as_player(roomid) {
 
 async function attack(roomid, target_player, target_hand_index, guess) {
   try {
-    await fetch(`http://${DOMAIN}/api/v1/room/${roomid}/attack`, {
+    await fetch(`/api/v1/room/${roomid}/attack`, {
       method: "POST",
       mode: "cors",
       credentials: "include",
@@ -66,7 +64,7 @@ async function attack(roomid, target_player, target_hand_index, guess) {
 
 async function stay(roomid) {
   try {
-    await fetch(`http://${DOMAIN}/api/v1/room/${roomid}/stay`, {
+    await fetch(`/api/v1/room/${roomid}/stay`, {
       method: "POST",
       mode: "cors",
       credentials: "include",
@@ -170,7 +168,9 @@ function Room() {
 
   React.useEffect(() => {
     async function impl() {
-      const socket = new WebSocket(`ws://${DOMAIN}/api/v1/room/${roomid}/ws`);
+      const socket = new WebSocket(
+        `ws://${window.location.host}/api/v1/room/${roomid}/ws`
+      );
       socket.onclose = async e => {
         console.log(`ws closed ${e.code}`);
       };
