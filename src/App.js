@@ -11,7 +11,6 @@ import "./App.css";
 async function create_room(num_players) {
   const response = await fetch(`/api/v1/room`, {
     method: "POST",
-    mode: "cors",
     headers: {
       "Content-Type": "application/json"
     },
@@ -33,7 +32,6 @@ async function register_as_player(roomid) {
   try {
     await fetch(`/api/v1/room/${roomid}/register`, {
       method: "POST",
-      mode: "cors",
       credentials: "include",
       headers: {
         "Content-Type": "application/json"
@@ -49,7 +47,6 @@ async function attack(roomid, target_player, target_hand_index, guess) {
   try {
     await fetch(`/api/v1/room/${roomid}/attack`, {
       method: "POST",
-      mode: "cors",
       credentials: "include",
       headers: {
         "Content-Type": "application/json"
@@ -66,7 +63,6 @@ async function stay(roomid) {
   try {
     await fetch(`/api/v1/room/${roomid}/stay`, {
       method: "POST",
-      mode: "cors",
       credentials: "include",
       headers: {
         "Content-Type": "application/json"
