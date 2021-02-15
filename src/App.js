@@ -94,7 +94,7 @@ function App() {
         value={numPlayers}
         min={2}
         max={4}
-        onChange={e => setNumPlayers(e.target.value)}
+        onChange={e => setNumPlayers(parseInt(e.target.value))}
       />
       <button onClick={createNewRoom}>Create a new room</button>
       <ul>
@@ -220,7 +220,7 @@ function Room() {
       {hasGameFinished() &&
         room.board.your_player_index &&
         room.board.winner !== room.board.your_player_index && (
-          <h2>You lost!</h2>
+          <h2>You lost...</h2>
         )}
       {Game(room)}
       <div>
@@ -288,16 +288,20 @@ function Game(room) {
         <div>
           <span className="game-player-index-you"></span>
           <span className="game-player-index">Deck top</span>
-          {b.deck_top === 0 && <span className="game-black-card"></span>}
-          {b.deck_top === 1 && <span className="game-white-card"></span>}
+          {b.deck_top !== null && b.deck_top[0] === 0 && (
+            <span className="game-black-card"></span>
+          )}
+          {b.deck_top !== null && b.deck_top[0] === 1 && (
+            <span className="game-white-card"></span>
+          )}
         </div>
         <div>
           <span className="game-player-index-you"></span>
           <span className="game-player-index">Attacker</span>
-          {b.attacker_card[0] === 1 && b.attacker_card[1] === 0 && (
+          {b.attacker_card[0] === 1 && b.attacker_card[1][0] === 0 && (
             <span className="game-black-card"></span>
           )}
-          {b.attacker_card[0] === 1 && b.attacker_card[1] === 1 && (
+          {b.attacker_card[0] === 1 && b.attacker_card[1][0] === 1 && (
             <span className="game-white-card"></span>
           )}
         </div>
@@ -307,7 +311,7 @@ function Game(room) {
               {pi_minus_1 + 1 === b.your_player_index && "You"}
             </span>
             <span className="game-player-index">{pi_minus_1 + 1}.</span>
-            {hand.map(([n, hidden]) => Card(n, hidden))}
+            {hand.map(([n, hidden, uuid]) => Card(n, hidden, uuid))}
             {pi_minus_1 + 1 === b.current_turn && (
               <span className="game-player-index-current-turn">
                 &lt;== TURN
@@ -337,7 +341,7 @@ function Game(room) {
   }
 }
 
-function Card(n, hidden) {
+function Card(n, hidden, uuid) {
   const black = n % 2 === 0;
   const num = Math.floor(n / 2);
 
