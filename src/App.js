@@ -8,6 +8,16 @@ import {
 } from "react-router-dom";
 import "./App.css";
 
+function get_ws_scheme() {
+  if (!process.env.NODE_ENV || process.env.NODE_ENV === "development") {
+    // dev
+    return "ws";
+  } else {
+    // prod
+    return "wss";
+  }
+}
+
 async function create_room(num_players) {
   const response = await fetch(`/api/v1/room`, {
     method: "POST",
@@ -165,7 +175,7 @@ function Room() {
   React.useEffect(() => {
     async function impl() {
       const socket = new WebSocket(
-        `ws://${window.location.host}/api/v1/room/${roomid}/ws`
+        `${get_ws_scheme()}://${window.location.host}/api/v1/room/${roomid}/ws`
       );
       socket.onclose = async e => {
         console.log(`ws closed ${e.code}`);
