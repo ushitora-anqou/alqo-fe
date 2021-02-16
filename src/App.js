@@ -121,11 +121,12 @@ function Room() {
   const { roomid } = useParams();
   const [room, setRoom] = React.useState({});
   const [canRegister, setCanRegister] = React.useState(false);
-  const [socket, setSocket] = React.useState(null);
+  const ws = React.useRef();
   const attackTargetPlayer = React.useRef();
   const attackTargetHandIndex = React.useRef();
   const attackGuessColor = React.useRef();
   const attackGuessNum = React.useRef();
+  const [eventList, setEventList] = React.useState([]);
 
   async function updateRoomState() {
     const room = await get_room_info(roomid);
@@ -155,6 +156,65 @@ function Room() {
     if (await stay(roomid)) await updateRoomState();
   }
 
+  async function onWSMessage(e) {
+    const [event, data] = JSON.parse(e.data);
+    let eventDesc = null;
+    switch (event) {
+      case "player_registered":
+        eventDesc = `New player registered (index: ${data}).`;
+        break;
+      case "game_started":
+        eventDesc = `Game started.`;
+        break;
+      case "your_hand":
+        eventDesc = `Your hand is: [${data.join(", ")}].`;
+        break;
+      case "your_turn":
+        eventDesc = `Your turn has come.`;
+        break;
+      case "attacked":
+        if (data.result) eventDesc = `Attack succeeded: `;
+        else eventDesc = `Attack failed: `;
+        eventDesc += `player ${data.target_player}; `;
+        eventDesc += `hand ${data.target_hand_index}; `;
+        const guessColor = data.guess % 2 === 0 ? "black" : "white";
+        const guessNum = Math.floor(data.guess / 2);
+        eventDesc += `guess (${guessColor}, ${guessNum}). `;
+        if (!data.result && room.board.attacker_card[0] === 1) {
+          const insertedPlayer = room.board.current_turn;
+          const insertedIndex = getHandIndexByUUID(
+            data.board.hands,
+            insertedPlayer,
+            room.board.attacker_card[1][2]
+          );
+          eventDesc += `The attacker card was inserted to: player ${insertedPlayer}; index ${insertedIndex}.`;
+        }
+        break;
+      case "stayed":
+        eventDesc = `Stayed.`;
+        if (room.board.attacker_card[0] === 1) {
+          const insertedPlayer = room.board.current_turn;
+          const insertedIndex = getHandIndexByUUID(
+            data.hands,
+            insertedPlayer,
+            room.board.attacker_card[1][2]
+          );
+          eventDesc += `The attacker card was inserted to: player ${insertedPlayer}; index ${insertedIndex}.`;
+        }
+        break;
+      case "attacker_card_chosen":
+        eventDesc = `Attacker card has been chosen: ${data}`;
+        break;
+      case "game_finished":
+        eventDesc = `Game finished. The winner is player ${data}`;
+        break;
+    }
+    setEventList(l => [...l, eventDesc]);
+
+    // FIXME
+    await updateRoomState();
+  }
+
   function hasGameFinished() {
     return room.status === "playing" && room.board.winner !== null;
   }
@@ -172,6 +232,10 @@ function Room() {
     return canAttack() && room.board.can_stay;
   }
 
+  function getHandIndexByUUID(hands, player, uuid) {
+    return hands[player - 1].findIndex(h => h[2] === uuid) + 1;
+  }
+
   React.useEffect(() => {
     async function impl() {
       const socket = new WebSocket(
@@ -180,26 +244,7 @@ function Room() {
       socket.onclose = async e => {
         console.log(`ws closed ${e.code}`);
       };
-      socket.onmessage = async e => {
-        const [event, data] = JSON.parse(e.data);
-        switch (event) {
-          case "player_registered":
-          case "game_started":
-          case "your_hand":
-          case "your_turn":
-          case "attacked":
-          case "stayed":
-          case "attacker_card_chosen":
-          case "game_finished":
-            // FIXME
-            await updateRoomState();
-            break;
-        }
-      };
-      setSocket(old => {
-        if (old !== null) old.close();
-        return socket;
-      });
+      ws.current = socket;
 
       const room = await updateRoomState();
       if (
@@ -209,9 +254,17 @@ function Room() {
         )
       )
         setCanRegister(true);
+
+      return () => {
+        ws.current.close();
+      };
     }
     impl();
   }, [roomid]);
+
+  React.useEffect(() => {
+    ws.current.onmessage = onWSMessage;
+  }, [room]);
 
   return (
     <div>
@@ -266,6 +319,18 @@ function Room() {
         </div>
       )}
       <div>{canStay() && <button onClick={onStay}>Stay</button>}</div>
+      <h2>Events you saw</h2>
+      <div>
+        <ol reversed="reversed">
+          {eventList
+            .slice()
+            .reverse()
+            .map((desc, i) => (
+              <li key={eventList.length - i}>{desc}</li>
+            ))}
+        </ol>
+      </div>
+      <h2>Room state</h2>
       <div>
         <pre>{JSON.stringify(room, null, 2)}</pre>
       </div>
