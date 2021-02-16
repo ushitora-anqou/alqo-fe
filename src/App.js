@@ -391,7 +391,7 @@ function Game(room) {
           </div>
         ))}
         <hr />
-        {b.your_hand && (
+        {b.your_hand !== null && (
           <div>
             <span className="game-player-index-you"></span>
             <span className="game-player-index">Yours</span>
@@ -399,7 +399,7 @@ function Game(room) {
             <span className="game-player-index-current-turn"></span>
           </div>
         )}
-        {b.your_attacker_card_from_deck && (
+        {b.your_attacker_card_from_deck !== null && (
           <div>
             <span className="game-player-index-you"></span>
             <span className="game-player-index">Attacker</span>
